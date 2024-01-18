@@ -1,13 +1,13 @@
 <script setup>
-import GroupItem from "@/Components/app/GroupItem.vue";
-import TextInput from '@/Components/TextInput.vue';
-import {ref} from   "vue";
+    import GroupItem from "@/Components/app/GroupItem.vue";
+    import TextInput from '@/Components/TextInput.vue';
+    import {ref} from   "vue";
 
-const searchKeyword = ref('');
+    const searchKeyword = ref('');
 
-defineProps({
+    defineProps({
 
-});
+    });
 </script>
 
 <template>

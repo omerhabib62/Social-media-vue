@@ -3,6 +3,8 @@ import { Head, Link } from '@inertiajs/vue3';
 
 import GroupList from "@/Components/app/GroupList.vue";
 import FollowingList from '@/Components/app/FollowingList.vue';
+import CreatePost from '@/Components/app/CreatePost.vue';
+import PostList from '@/Components/app/PostList.vue';
 
 
 defineProps({
@@ -17,7 +19,8 @@ defineProps({
             <GroupList />
         </div>
         <div class="col-span-6">
-            Posts
+            <CreatePost />
+            <PostList />
         </div>
         <div class="col-span-3 py-6">
             <FollowingList/>

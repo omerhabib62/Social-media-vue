@@ -1,89 +1,41 @@
 <script setup>
-    import GroupItem from "@/Components/app/GroupItem.vue";
-    import TextInput from '@/Components/TextInput.vue';
-    import {ref} from   "vue";
+import {Disclosure, DisclosureButton, DisclosurePanel} from "@headlessui/vue";
+import GroupListItems from "@/Components/app/GroupListItems.vue";
 
-    const searchKeyword = ref('');
+defineProps({
+    groups: Array
+})
 
-    defineProps({
-
-    });
-    import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 </script>
 
 <template>
-    <div class="px-3 bg-white rounded border py-3 lg:h-full overflow-hidden lg:flex lg:flex-col">
-        <div class="block lg:hidden overflow-hidden flex flex-col h-full">
-            <Disclosure v-slot="{ open }">            
-                <DisclosureButton class="text-left">
-                    <h2 class="text-xl font-bold mb-3">My Groups</h2>
+    <div class="px-3 bg-white dark:bg-slate-950 rounded border dark:border-slate-900 dark:text-gray-100 h-full py-3 overflow-hidden">
+        <div class="block lg:hidden">
+            <Disclosure v-slot="{ open }">
+                <DisclosureButton class="w-full">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold">My Groups</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="w-6 h-6 transition-all"
+                             :class="open ? 'rotate-90 transform' : ''">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                        </svg>
+                    </div>
                 </DisclosureButton>
                 <DisclosurePanel>
-                    <TextInput :modal-value="searchKeyword" placeholder="Search" class="w-full"/>
-                    <div class="mt-3 flex-1 overflow-auto">
-                        <div v-if="false" class="text-gray-400 text-center p-3">
-                            You are not joined to any group
-                        </div>
-
-                        <div v-else >
-                            <GroupItem
-                                image="https://picsum.photos/100"
-                                title="Laravel Developers"
-                                description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                                />
-                            <GroupItem
-                                image="https://picsum.photos/100"
-                                title="Laravel Developers"
-                                description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                                />
-                            <GroupItem
-                                image="https://picsum.photos/100"
-                                title="Laravel Developers"
-                                description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                                />
-                            <GroupItem
-                                image="https://picsum.photos/100"
-                                title="Laravel Developers"
-                                description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                                />
-
-                        </div>
-                    </div>
-                </DisclosurePanel>            
+                    <GroupListItems :groups="groups"/>
+                </DisclosurePanel>
             </Disclosure>
         </div>
-        <div class="hidden lg:block overflow-hidden flex flex-col lg:h-full">
-            <h2 class="text-xl font-bold mb-3">My Groups</h2>
-            <TextInput :modal-value="searchKeyword" placeholder="Search" class="w-full"/>
-            <div class="mt-3 flex-1 overflow-auto">
-                <div v-if="false" class="text-gray-400 text-center p-3">
-                    You are not joined to any group
-                </div>
-
-                <div v-else >
-                    <GroupItem
-                        image="https://picsum.photos/100"
-                        title="Laravel Developers"
-                        description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                        />
-                    <GroupItem
-                        image="https://picsum.photos/100"
-                        title="Laravel Developers"
-                        description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                        />
-                    <GroupItem
-                        image="https://picsum.photos/100"
-                        title="Laravel Developers"
-                        description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                        />
-                    <GroupItem
-                        image="https://picsum.photos/100"
-                        title="Laravel Developers"
-                        description="lorem ipsum dolor sit amet, consectetur adipisicing elit."
-                        />
-
-                </div>
+        <div class="h-full overflow-hidden flex-col hidden lg:flex">
+            <div class="flex justify-between">
+                <h2 class="text-xl font-bold">My Groups</h2>
             </div>
+            <GroupListItems :groups="groups"/>
         </div>
     </div>
 </template>
+
+<style scoped>
+
+</style>

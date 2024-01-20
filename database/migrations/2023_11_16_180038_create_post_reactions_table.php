@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('post_reactions', function (Blueprint $table) {
             $table->id();
-            $table->longText('body')->nullable();
+            $table->foreignId('post_id')->constrained('posts');
+            $table->string('type'); // like, dislike, sad, laugh
             $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('group_id')->nullable()->constrained('groups');
-            $table->foreignId('deleted_by')->nullable()->constrained('users');
-            $table->integer('deleted_at')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable();
         });
     }
 
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('post_reactions');
     }
 };

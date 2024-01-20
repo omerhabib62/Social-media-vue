@@ -1,55 +1,40 @@
 <script setup>
-import FollowingItem from "@/Components/app/FollowingItem.vue";
-import TextInput from '@/Components/TextInput.vue';
-import {ref} from   "vue";
+import FollowingListItems from "@/Components/app/FollowingListItems.vue";
+import {Disclosure, DisclosureButton, DisclosurePanel} from "@headlessui/vue";
+import GroupListItems from "@/Components/app/GroupListItems.vue";
 
-const searchKeyword = ref('');
 defineProps({
+    users: Array
+})
 
-});
 </script>
 
 <template>
-    <div class="px-3 bg-white rounded border py-3 h-[300px] lg:h-full overflow-hidden flex flex-col">
-        <h2 class="text-xl font-bold mb-3">Following</h2>
-        <TextInput :modal-value="searchKeyword" placeholder="Search" class="w-full"/>
-        <div class="mt-3 flex-1 overflow-auto">
-            <div v-if="false" class="text-gray-400 text-center p-3">
-                You are not following yet.
-            </div>
-
-            <div v-else>
-                <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="John Doe"
-                    />
-                <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="Denzel Washington"
-                    />
-                <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="John Doe"
-                    />
-                <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="Denzel Washington"
-                    /> <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="John Doe"
-                    />
-                <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="Denzel Washington"
-                    /> <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="John Doe"
-                    />
-                <FollowingItem
-                    image="https://picsum.photos/100"
-                    title="Denzel Washington"
-                    />
-            </div>
+    <div class="px-3 bg-white dark:bg-slate-950 dark:border-slate-900 dark:text-gray-100  rounded border h-full py-3 overflow-hidden">
+        <div class="block lg:hidden">
+            <Disclosure v-slot="{ open }">
+                <DisclosureButton class="w-full">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold">My Followings</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="w-6 h-6 transition-all"
+                             :class="open ? 'rotate-90 transform' : ''">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                        </svg>
+                    </div>
+                </DisclosureButton>
+                <DisclosurePanel>
+                    <FollowingListItems :users="users"/>
+                </DisclosurePanel>
+            </Disclosure>
+        </div>
+        <div class="h-full overflow-hidden flex-col hidden lg:flex">
+            <h2 class="text-xl font-bold">My Followings</h2>
+            <FollowingListItems :users="users"/>
         </div>
     </div>
 </template>
+
+<style scoped>
+
+</style>

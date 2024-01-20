@@ -1,86 +1,153 @@
 <script setup>
-    defineProps({
-        post: Object
-    });
-    import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
+import {ChatBubbleLeftRightIcon, HandThumbUpIcon} from '@heroicons/vue/24/outline'
+import {Disclosure, DisclosureButton, DisclosurePanel} from '@headlessui/vue'
+import PostUserHeader from "@/Components/app/PostUserHeader.vue";
+import {router, useForm, usePage} from '@inertiajs/vue3'
+import axiosClient from "@/axiosClient.js";
+import ReadMoreReadLess from "@/Components/app/ReadMoreReadLess.vue";
+import EditDeleteDropdown from "@/Components/app/EditDeleteDropdown.vue";
+import PostAttachments from "@/Components/app/PostAttachments.vue";
+import CommentList from "@/Components/app/CommentList.vue";
+import {computed} from "vue";
+import UrlPreview from "@/Components/app/UrlPreview.vue";
+import {MapPinIcon} from "@heroicons/vue/24/outline/index.js";
 
+const props = defineProps({
+    post: Object
+})
 
-    function isImage(file){
-        const mime = file.mime.split('/');
-        return mime[0].toLowerCase() === "image";
+const authUser = usePage().props.auth.user;
+const group = usePage().props.group;
+
+const emit = defineEmits(['editClick', 'attachmentClick'])
+
+const postBody = computed(() => {
+    let content = props.post.body.replace(
+        /(?:(\s+)|<p>)((#\w+)(?![^<]*<\/a>))/g,
+        (match, group1, group2) => {
+            const encodedGroup = encodeURIComponent(group2);
+            return `${group1 || ''}<a href="/search/${encodedGroup}" class="hashtag">${group2}</a>`;
+        }
+    )
+
+    return content;
+})
+const isPinned = computed(() => {
+    if (group?.id) {
+        return group?.pinned_post_id === props.post.id
     }
+
+    return authUser?.pinned_post_id === props.post.id
+})
+
+function openEditModal() {
+    emit('editClick', props.post)
+}
+
+function deletePost() {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+        router.delete(route('post.destroy', props.post), {
+            preserveScroll: true
+        })
+    }
+}
+
+function pinUnpinPost() {
+    const form = useForm({
+        forGroup: group?.id
+    })
+    let isPinned = false;
+    if (group?.id) {
+        isPinned = group?.pinned_post_id === props.post.id;
+    } else {
+        isPinned = authUser?.pinned_post_id === props.post.id;
+    }
+
+    form.post(route('post.pinUnpin', props.post.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            if (group?.id) {
+                group.pinned_post_id = isPinned ? null : props.post.id
+            } else {
+                authUser.pinned_post_id = isPinned ? null : props.post.id
+            }
+        }
+    })
+}
+
+function openAttachment(ind) {
+    emit('attachmentClick', props.post, ind)
+}
+
+function sendReaction() {
+    axiosClient.post(route('post.reaction', props.post), {
+        reaction: 'like'
+    })
+        .then(({data}) => {
+            props.post.current_user_has_reaction = data.current_user_has_reaction
+            props.post.num_of_reactions = data.num_of_reactions;
+        })
+}
+
 </script>
 
 <template>
-    <div class="bg-white border rounded p-4 shadow mb-4">
-        <div class="flex items-center gap-2 mb-3">
-            <a href="javascript:void(0)">
-                <img :src="post.user.avatar"  class="w-[40px] rounded-full border border-2 transition-all hover:border-blue-400"/>
-            </a>
-            <div>
-                <h4 class="font-bold">
-                    <a href="javascript:void(0)" class="hover:underline">{{ post.user.name }}</a>
-                    <template v-if="post.group">
-                        >
-                        <a href="javascript:void(0)" class="hover:underline">{{ post.group.name }}</a>
-                    </template>
-                    
-                </h4>
-                <small class="text-gray-400">{{ post.created_at }}</small>
+    <div class="bg-white border dark:bg-slate-950 dark:border-slate-900 dark:text-gray-100 rounded p-4 mb-3">
+        <div class="flex items-center justify-between mb-3">
+            <PostUserHeader :post="post"/>
+            <div class="flex items-center gap-2">
+                <div v-if="isPinned" class="flex items-center text-xs">
+                    <MapPinIcon
+                                class="h-3 w-3"
+                                aria-hidden="true" />
+                    pinned
+                </div>
+                <EditDeleteDropdown :user="post.user" :post="post"
+                                    @edit="openEditModal"
+                                    @delete="deletePost"
+                                    @pin="pinUnpinPost"
+                />
             </div>
         </div>
         <div class="mb-3">
-            <Disclosure v-slot="{ open }">
-                <div v-if="!open" v-html="post.body.substring(0,200)"></div>
-                <DisclosurePanel class="">
-                    <div v-html="post.body" />
-                </DisclosurePanel>
-                <div class="flex justify-end">
-                    <DisclosureButton class="text-blue-500 hover:underline">
-                        {{ open ? "Read Less" :  "Read More" }}  
-                    </DisclosureButton>
-                </div>                
-            </Disclosure>
+            <ReadMoreReadLess :content="postBody"/>
+            <UrlPreview :preview="post.preview" :url="post.preview_url"/>
         </div>
-        <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
-            <template v-for="attachment of post.attachments" class="">
-                
-                <div class="group aspect-square bg-blue-100 flex flex-col items-center justify-center text-gray-500 relative">
-                    <!-- download -->
-                    <button class="opacity-0 group-hover:opacity-100 transition-all w-8 h-8 flex items-center justify-center text-gray-100 bg-gray-700 rounded absolute right-2 top-2 cursor-pointer hover:bg-gray-900">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 ">
-                            <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                    <!--/download -->
-                    <img v-if="isImage(attachment)"
-                     :src="attachment.url"
-                      class="object-cover aspect-square " />
+        <div class="grid gap-3 mb-3" :class="[
+            post.attachments.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+        ]">
+            <PostAttachments :attachments="post.attachments" @attachmentClick="openAttachment"/>
+        </div>
+        <Disclosure v-slot="{ open }">
+            <!--            Like & Comment buttons-->
+            <div class="flex gap-2">
+                <button
+                    @click="sendReaction"
+                    class="text-gray-800 dark:text-gray-100 flex gap-1 items-center justify-center  rounded-lg py-2 px-4 flex-1"
+                    :class="[
+                    post.current_user_has_reaction ?
+                     'bg-sky-100 dark:bg-sky-900 hover:bg-sky-200 dark:hover:bg-sky-950' :
+                     'bg-gray-100 dark:bg-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800 '
+                ]"
+                >
+                    <HandThumbUpIcon class="w-5 h-5"/>
+                    <span class="mr-2">{{ post.num_of_reactions }}</span>
+                    {{ post.current_user_has_reaction ? 'Unlike' : 'Like' }}
+                </button>
+                <DisclosureButton
+                    class="text-gray-800 dark:text-gray-100 flex gap-1 items-center justify-center bg-gray-100 dark:bg-slate-900 dark:hover:bg-slate-800 rounded-lg hover:bg-gray-200  py-2 px-4 flex-1"
+                >
+                    <ChatBubbleLeftRightIcon class="w-5 h-5"/>
+                    <span class="mr-2">{{ post.num_of_comments }}</span>
+                    Comment
+                </DisclosureButton>
+            </div>
 
-                    <template v-else>
-                                                                            
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 ">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                        </svg>
-                        
-                        <small>{{ attachment.name }}</small>
-                    </template>
-                </div>
-            </template>
-        </div>
-        <div class="flex gap-2">
-            <button class="text-gray-800 flex flex-1 justify-center bg-gray-200 hover:bg-gray-300 items-center py-2 px-4 gap-1 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path d="M7.493 18.5c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.125c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75A.75.75 0 0 1 15 2a2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.727a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507C2.28 19.482 3.105 20 3.994 20H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" />
-                </svg>
-                Like
-            </button>
-            <button class="text-gray-800 flex flex-1 justify-center bg-gray-200 hover:bg-gray-300 items-center py-2 px-4 gap-1 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path fill-rule="evenodd" d="M5.337 21.718a6.707 6.707 0 0 1-.533-.074.75.75 0 0 1-.44-1.223 3.73 3.73 0 0 0 .814-1.686c.023-.115-.022-.317-.254-.543C3.274 16.587 2.25 14.41 2.25 12c0-5.03 4.428-9 9.75-9s9.75 3.97 9.75 9c0 5.03-4.428 9-9.75 9-.833 0-1.643-.097-2.417-.279a6.721 6.721 0 0 1-4.246.997Z" clip-rule="evenodd" />
-                </svg>
-                Comment
-            </button>
-        </div>
+            <DisclosurePanel class="comment-list mt-3 max-h-[400px] overflow-auto">
+                <CommentList :post="post" :data="{comments: post.comments}"/>
+            </DisclosurePanel>
+        </Disclosure>
+
     </div>
 </template>
+

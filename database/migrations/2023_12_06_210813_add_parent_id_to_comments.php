@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('comments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('post_id')->constrained('posts');
-            $table->foreignId('user_id')->constrained('users');
-            $table->text('comment'); //like, dislike, sad, laugh
-            $table->timestamps();
+        Schema::table('comments', function (Blueprint $table) {
+            $table->bigInteger('parent_id')->unsigned()->nullable();
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comments');
+        Schema::table('comments', function (Blueprint $table) {
+            $table->dropColumn('parent_id');
+        });
     }
 };
